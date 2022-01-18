@@ -263,7 +263,6 @@ public class TravelerStream implements Runnable {
         } else {
             priority = Thread.MIN_PRIORITY;
         }
-//        System.out.println(Thread.currentThread().getName() + " prior: " + priority);
         return priority;
     }
 

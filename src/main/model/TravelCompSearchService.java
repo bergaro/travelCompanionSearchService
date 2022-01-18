@@ -18,19 +18,25 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TravelCompSearchService implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private static ExecutorService travelersPool = Executors.newCachedThreadPool();
     private static Map<String, List<Car>> freeCars = new ConcurrentHashMap<>();
     private static List<Traveler> travelers = Collections.synchronizedList(new ArrayList<>());
     private static final transient Map<String, List<Thread>> travelersToSent = new ConcurrentHashMap<>();
     private static final transient long FREQUENCY_NEW_TRAVELERS_CREATION = AppConfig.getTravelersFrequencyCreation();
     /**
-     * Запускает потоки новых путешественников
+     * Запускает поток демон, который создаёт новых путешественников
      */
     public void runStreamsTravelers() {
-        ExecutorService threadPool = Executors.newCachedThreadPool();
-        while(true){
-            threadPool.execute(new TravelerStream(travelers, freeCars, travelersToSent));
-            travelersCreationPause();
-        }
+        Runnable addTravelersStream = () -> {
+        	while(true){
+        		travelersPool.execute(new TravelerStream(travelers, freeCars, travelersToSent));
+                travelersCreationPause();
+            }
+        };
+        Thread demonThread = new Thread(addTravelersStream);
+        demonThread.setDaemon(true);
+        demonThread.start();
+        
     }
     /**
      * Добавляет новые автомобили в коллекцию готовых к отправке в пункт назначения авто
